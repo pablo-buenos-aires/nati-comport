@@ -64,3 +64,5 @@ watcher.exe --process notepad.exe --com COM3 --dry-run
 ```
 
 Программа будет логировать, что сделала бы открытие/запись/чтение, не открывая реальный порт.
+
+> Примечание: `main.cpp` содержит и `main`, и `wmain` (обертка), чтобы проект линковался в ANSI/Unicode startup-конфигурациях C++Builder XE.

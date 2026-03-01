@@ -3,6 +3,8 @@
 #include "ProcessMonitor.h"
 #include "SerialPort.h"
 
+#include <vector>
+
 namespace
 {
     std::string ExitClassToString(ExitClassification cls)
@@ -63,7 +65,7 @@ namespace
     }
 }
 
-int main(int argc, char *argv[])
+int RunApp(int argc, char *argv[])
 {
     AppConfig config;
     std::string parseError;
@@ -137,4 +139,47 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    return RunApp(argc, argv);
+}
+
+int wmain(int argc, wchar_t *argv[])
+{
+    std::vector<std::string> utf8Args;
+    std::vector<char *> narrowArgv;
+    utf8Args.reserve(static_cast<size_t>(argc));
+    narrowArgv.reserve(static_cast<size_t>(argc));
+
+    for (int i = 0; i < argc; ++i)
+    {
+        const wchar_t *w = argv[i];
+
+        int bytes = WideCharToMultiByte(CP_UTF8, 0, w, -1, NULL, 0, NULL, NULL);
+        UINT cp = CP_UTF8;
+        if (bytes <= 0)
+        {
+            bytes = WideCharToMultiByte(CP_ACP, 0, w, -1, NULL, 0, NULL, NULL);
+            cp = CP_ACP;
+        }
+
+        if (bytes <= 0)
+        {
+            utf8Args.push_back("");
+            continue;
+        }
+
+        std::string converted(static_cast<size_t>(bytes - 1), '\0');
+        WideCharToMultiByte(cp, 0, w, -1, &converted[0], bytes, NULL, NULL);
+        utf8Args.push_back(converted);
+    }
+
+    for (size_t i = 0; i < utf8Args.size(); ++i)
+    {
+        narrowArgv.push_back(const_cast<char *>(utf8Args[i].c_str()));
+    }
+
+    return RunApp(argc, narrowArgv.empty() ? NULL : &narrowArgv[0]);
 }
